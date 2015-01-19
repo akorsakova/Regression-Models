@@ -1,0 +1,68 @@
+---
+title: "Regression Models Peer Assessment"
+author: "Anna Korsakova Bain"
+date: "Monday, January 19, 2015"
+output: pdf_document
+---
+
+In today's exciting new issue of Motor Trend US magazine, we will be looking at the how transmission types affect miles per galon (MPG) fuel consumption in cars. Specifically, we will be exploring the differences between manual and automatic transmission and their effects on MPG to ultimately decide which type of transmission is better for MPG. 
+
+To quanitfy the MPG difference between transmissions, we will use linear regression models on the mtcars dataset. The mtcars dataset looks at fuel consumtion and 10 other aspects of automobile design for models ranging from 1973 to 1974.
+
+## Exploratory Analysis
+
+Let's take a look at the mtcars dataset, it's variables and a cursory look at transmission types vs MPG.
+
+```{r}
+  data(mtcars)
+  library(ggplot2)
+
+  str(mtcars)
+  dim(mtcars)
+  ## convert transmission type to a factor
+  mtcars$trns <- factor(mtcars$am,levels=c(0,1), labels=c("Automatic","Manual")) 
+```
+There are 11 variables in this dataset and 32 observations. We are interested in how am (transmission type, converted to a factor) affects mpg (see plots 1.1 and 1.2 in appendix). At first look, it seems that manual transmission produces better MPG. Next, we will look at some hypothesis testing.
+
+```{r}
+  ##check if variances are equal
+  aggregate(mpg~trns, data = mtcars, var)
+
+  t.test(mpg ~ am, paired=FALSE, var.equal=FALSE, data=mtcars)
+```
+Performing and unpaired t-test with unequeal variances (see varriance differences above), we show that the confidence interval is entirely below 0, suggesting better MPG on manual transmission cars than automatic. Also, the p-value os 0.001374 allows us to reject the null hypothesis that transmission types have no effect on MPG.
+
+## Analysis
+To begin, we will do a simple linear regression analysis on transmission type vs mpg. This will tell us about the relationship between mpg and transmission type without any other variables.
+
+```{r}
+  fit <- lm(formula = mpg ~ am, data = mtcars)
+  summary(fit)
+```
+From the simple regression analysis, we can see that the mean MPG for automatic cars is 17.147 which is the B0- expected value of response when am = 0, also known as the intercept. We can also see that, on average, manual cars get 7.245 miles per gallons (US) more, which is the B1- the expected change in response for a 1 unit change in the predictor. Looking at the model fit (appendix, figure 2.1), we can see that maybe the simple linear model is not the best fit for this anaylsis. We will explore more by looking at the residuals.
+
+##COR
+##Strength of the linear relatioship between the X and the Y data with ##stronger relationships as cor(x,y) heads towards -1 or 1
+
+## Appendix - Figures
+
+```{r}
+  ##boxplot, fig 1.1
+  qplot(trns, mpg, data=mtcars, geom=c("boxplot", "jitter"), 
+     fill=trns, main="Figure 1.1, Mileage by Transmission Type",
+     xlab="", ylab="Miles per Gallon")
+  
+  ##MPG frequency, fig 1.2
+  freqData <- as.data.frame(table(mtcars$trns, mtcars$mpg))
+  names(freqData) <- c("transmission", "mpg", "freq")
+  freqData$mpg <- as.numeric(as.character(freqData$mpg))
+  g <- ggplot(subset(freqData, freq > 0), aes(x = mpg, y = transmission), main="Figure 1.2, Mileage Frequency by Transmission Type")
+  g <- g  + scale_size(range = c(2, 20), guide = "none" )
+  g <- g + geom_point(aes(colour=freq, size = freq))
+  g <- g + scale_colour_gradient(low = "grey", high="blue")                    
+  g <- g + ggtitle("Figure 1.2, Mileage Frequency by Transmission Type")
+
+  ##simple regression model, fig 2.1
+  plot(mtcars$am, mtcars$mpg, xlab = "Transmission", ylab = "MPG", main =   "MPG vs Transmission Type, Including Model Fit", bg = "lightblue", col =   "black", cex = 1.1, pch = 21, frame = FALSE)
+  abline(lm(mpg ~ am, data = mtcars), lwd = 2)
+```
